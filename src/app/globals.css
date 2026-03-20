@@ -1,0 +1,122 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── CSS custom properties (design tokens) ── */
+:root {
+  --gold: #C9A84C;
+  --gold-light: #F0D080;
+  --gold-dark: #7A5C1E;
+  --gold-pale: #E8D5A3;
+  --bg: #0A0A0A;
+  --surface: #141414;
+  --card: #1C1C1C;
+  --border: #2A2A2A;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--bg);
+  color: #ffffff;
+  font-family: var(--font-lato), sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+/* ── Gold gradient text ── */
+.gold-text {
+  background: linear-gradient(135deg, var(--gold-light) 0%, var(--gold) 50%, var(--gold-dark) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ── Gold gradient background ── */
+.gold-gradient {
+  background: linear-gradient(135deg, var(--gold-dark) 0%, var(--gold) 50%, var(--gold-light) 100%);
+}
+
+/* ── Shimmer overlay ── */
+.shimmer {
+  background: linear-gradient(90deg, transparent 0%, rgba(201, 168, 76, 0.15) 50%, transparent 100%);
+  background-size: 200% 100%;
+  animation: shimmer 2.5s infinite;
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* ── Gold border with hover glow ── */
+.gold-border-animated {
+  border: 1px solid var(--border);
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+.gold-border-animated:hover {
+  border-color: var(--gold);
+  box-shadow: 0 0 20px rgba(201, 168, 76, 0.15);
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--gold-dark); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--gold); }
+
+/* ── Netflix horizontal row ── */
+.netflix-row {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  padding-bottom: 12px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--gold-dark) transparent;
+}
+.netflix-row::-webkit-scrollbar { height: 4px; }
+.netflix-row::-webkit-scrollbar-thumb { background: var(--gold-dark); border-radius: 2px; }
+
+/* ── Card hover scale ── */
+.card-hover {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  cursor: pointer;
+}
+.card-hover:hover {
+  transform: scale(1.05);
+  box-shadow: 0 8px 32px rgba(201, 168, 76, 0.25);
+}
+
+/* ── Gradient overlay (bottom to top) ── */
+.gradient-overlay {
+  background: linear-gradient(to top, rgba(10, 10, 10, 1) 0%, rgba(10, 10, 10, 0.5) 50%, transparent 100%);
+}
+
+/* ── CTA pulse glow animation ── */
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(201, 168, 76, 0.5); }
+  50% { box-shadow: 0 0 0 14px rgba(201, 168, 76, 0); }
+}
+.btn-pulse {
+  animation: pulse-glow 2.5s infinite;
+}
+
+/* ── Section fade-in (JS-controlled) ── */
+.section-fade {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.8s ease, transform 0.8s ease;
+}
+.section-fade.visible {
+  opacity: 1;
+  transform: translateY(0);
+}

@@ -8,24 +8,48 @@ export default function HeroSection() {
   // Animate counters
   useEffect(() => {
     const targets = [8, 50000, 200];
-    counterRefs.current.forEach((el, i) => {
-      if (!el) return;
-      let start = 0;
-      const end = targets[i];
-      const duration = 2000;
-      const step = end / (duration / 16);
-      const timer = setInterval(() => {
-        start += step;
-        if (start >= end) {
-          start = end;
-          clearInterval(timer);
-        }
-        el.textContent =
-          i === 1
-            ? `${Math.floor(start / 1000)}k+`
-            : `${Math.floor(start)}+`;
-      }, 16);
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            const el = entry.target as HTMLSpanElement;
+            const index = Number(el.dataset.index);
+            if (isNaN(index)) return;
+
+            // Prevent re-triggering
+            if (el.dataset.animated === "true") return;
+            el.dataset.animated = "true";
+
+            const end = targets[index];
+            let start = 0;
+            const duration = 2000;
+            const step = end / (duration / 16);
+
+            const timer = setInterval(() => {
+              start += step;
+              if (start >= end) {
+                start = end;
+                clearInterval(timer);
+              }
+              el.textContent =
+                index === 1
+                  ? `${Math.floor(start / 1000)}k+`
+                  : `${Math.floor(start)}+`;
+            }, 16);
+
+            observer.unobserve(el);
+          }
+        });
+      },
+      { threshold: 0.1 }
+    );
+
+    counterRefs.current.forEach((el) => {
+      if (el) observer.observe(el);
     });
+
+    return () => observer.disconnect();
   }, []);
 
   return (
@@ -87,6 +111,7 @@ export default function HeroSection() {
             <div key={i} className="text-center">
               <div className="text-3xl md:text-4xl font-[var(--font-playfair)] font-bold gold-text">
                 <span
+                  data-index={i}
                   ref={(el) => {
                     if (el) counterRefs.current[i] = el;
                   }}

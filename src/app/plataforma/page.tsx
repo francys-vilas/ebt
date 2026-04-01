@@ -1,8 +1,46 @@
 "use client";
 import Link from "next/link";
+import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
+import { createBrowserClient } from "@supabase/ssr";
 import { course } from "@/data/mockData";
 
 function PlatformNavbar() {
+  const router = useRouter();
+  const [email, setEmail] = useState<string | null>(null);
+  const [open, setOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const supabase = createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      setEmail(data.user?.email ?? null);
+    });
+  }, []);
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  async function handleLogout() {
+    await supabase.auth.signOut();
+    router.push("/login");
+  }
+
+  const initials = email
+    ? email.split("@")[0].slice(0, 2).toUpperCase()
+    : "??";
+
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-[var(--bg)]/95 backdrop-blur-md border-b border-[var(--border)]">
       <div className="max-w-7xl mx-auto px-6 py-3 flex items-center justify-between">
@@ -20,12 +58,49 @@ function PlatformNavbar() {
             Plataforma
           </span>
         </div>
-        <Link
-          href="/"
-          className="text-gray-400 hover:text-[var(--gold)] text-sm transition-colors font-[var(--font-lato)]"
-        >
-          ← Voltar ao Site
-        </Link>
+
+        {/* User avatar + dropdown */}
+        <div className="relative" ref={dropdownRef}>
+          <button
+            onClick={() => setOpen((v) => !v)}
+            className="flex items-center gap-2.5 group"
+            aria-label="Menu do usuário"
+          >
+            {email && (
+              <span className="text-gray-400 text-xs font-[var(--font-lato)] hidden sm:block max-w-[180px] truncate">
+                {email}
+              </span>
+            )}
+            <div className="w-9 h-9 rounded-full gold-gradient flex items-center justify-center text-black text-xs font-bold font-[var(--font-playfair)] ring-2 ring-transparent group-hover:ring-[var(--gold)] transition-all duration-300">
+              {initials}
+            </div>
+          </button>
+
+          {open && (
+            <div className="absolute right-0 mt-3 w-56 rounded-xl border border-[var(--border)] shadow-xl overflow-hidden"
+              style={{ backgroundColor: "var(--surface)" }}>
+              {/* User info */}
+              <div className="px-4 py-3 border-b border-[var(--border)]">
+                <p className="text-xs text-gray-500 font-[var(--font-lato)]">Logado como</p>
+                <p className="text-sm text-white font-[var(--font-lato)] truncate mt-0.5">{email}</p>
+              </div>
+              {/* Actions */}
+              <div className="p-2">
+                <button
+                  onClick={handleLogout}
+                  className="w-full text-left px-3 py-2.5 rounded-lg text-sm text-red-400 hover:bg-red-400/10 font-[var(--font-lato)] transition-colors flex items-center gap-2"
+                >
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                    <polyline points="16 17 21 12 16 7" />
+                    <line x1="21" y1="12" x2="9" y2="12" />
+                  </svg>
+                  Sair da conta
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </nav>
   );

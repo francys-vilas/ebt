@@ -52,7 +52,7 @@ export default function Navbar() {
             </Link>
           ))}
           <Link
-            href="/plataforma"
+            href="/login"
             className="px-5 py-2.5 gold-gradient rounded-full text-black text-sm font-bold font-[var(--font-lato)] tracking-wide btn-pulse transition-all hover:opacity-90"
           >
             Acessar Curso
@@ -85,7 +85,7 @@ export default function Navbar() {
             </Link>
           ))}
           <Link
-            href="/plataforma"
+            href="/login"
             className="text-center px-5 py-3 gold-gradient rounded-full text-black font-bold font-[var(--font-lato)]"
             onClick={() => setMenuOpen(false)}
           >

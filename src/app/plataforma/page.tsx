@@ -1,12 +1,10 @@
 "use client";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
 import { createBrowserClient } from "@supabase/ssr";
 import { course } from "@/data/mockData";
 
 function PlatformNavbar() {
-  const router = useRouter();
   const [email, setEmail] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -34,7 +32,7 @@ function PlatformNavbar() {
 
   async function handleLogout() {
     await supabase.auth.signOut();
-    router.push("/login");
+    window.location.href = "/login";
   }
 
   const initials = email
@@ -42,7 +40,7 @@ function PlatformNavbar() {
     : "??";
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-[var(--bg)]/95 backdrop-blur-md border-b border-[var(--border)]">
+    <nav className="fixed top-0 left-0 right-0 z-50 bg-black/95 backdrop-blur-md border-b border-[var(--border)]">
       <div className="max-w-7xl mx-auto px-6 py-3 flex items-center justify-between">
         <div className="flex items-center gap-6">
           <Link href="/" className="flex items-center gap-2">
@@ -106,47 +104,70 @@ function PlatformNavbar() {
   );
 }
 
+type DbLesson = { id: string; module_id: string; title: string; description: string; video_id: string; duration: string; order_index: number };
+type DbModule = { id: string; title: string; description: string; thumbnail: string; order_index: number; lessons: DbLesson[] };
+
 export default function PlataformaPage() {
+  const [modules, setModules] = useState<DbModule[]>([]);
+  const [loading, setLoading]  = useState(true);
+
+  const supabase = createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
+
+  useEffect(() => {
+    async function load() {
+      const { data: mods } = await supabase.from("modules").select("*").order("order_index");
+      if (!mods || mods.length === 0) { setLoading(false); return; }
+      const withLessons = await Promise.all(mods.map(async (m) => {
+        const { data: lessons } = await supabase.from("lessons").select("*").eq("module_id", m.id).order("order_index");
+        return { ...m, lessons: lessons ?? [] };
+      }));
+      setModules(withLessons);
+      setLoading(false);
+    }
+    load();
+  }, []);
+
+  // All lessons flat for "Aulas em Destaque"
+  const featuredLessons = modules.flatMap(m => m.lessons.slice(0, 2).map(l => ({ ...l, moduleName: m.title })));
+
   return (
     <div className="min-h-screen bg-[var(--bg)]">
       <PlatformNavbar />
 
       {/* Hero banner (featured) */}
-      <div className="relative h-[65vh] w-full overflow-hidden">
+      <div className="relative h-[70vh] w-full overflow-hidden mt-[57px]">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={course.featuredBanner}
           alt={course.title}
-          className="absolute inset-0 w-full h-full object-cover"
+          className="absolute inset-0 w-full h-full object-cover object-center"
         />
-        <div className="absolute inset-0 gradient-overlay" />
-        <div className="absolute inset-0 bg-gradient-to-r from-[var(--bg)] via-transparent to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[var(--bg)] via-[var(--bg)]/30 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-r from-[var(--bg)]/70 via-transparent to-transparent" />
 
-        <div className="relative z-10 h-full flex flex-col justify-end px-8 md:px-16 pb-16 max-w-3xl">
-          {/* Badge */}
+        <div className="relative z-10 h-full flex flex-col justify-end px-8 md:px-16 pb-14 max-w-3xl">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[var(--gold)] text-black text-xs font-bold font-[var(--font-lato)] mb-4 w-fit">
             🎬 CURSO EM DESTAQUE
           </div>
-          <h1 className="text-4xl md:text-6xl font-[var(--font-playfair)] font-black text-white mb-2">
+          <h1 className="text-4xl md:text-6xl font-[var(--font-playfair)] font-black text-white mb-3">
             {course.title}
           </h1>
-          <p className="text-[var(--gold-pale)] font-[var(--font-playfair)] italic text-lg mb-4">
+          <p className="text-[var(--gold-pale)] font-[var(--font-playfair)] italic text-lg mb-5">
             {course.subtitle}
           </p>
-          <p className="text-gray-300 text-sm mb-6 max-w-xl font-[var(--font-lato)] leading-relaxed">
+          <p className="text-gray-300 text-sm mb-8 max-w-xl font-[var(--font-lato)] leading-relaxed">
             {course.description}
           </p>
           <div className="flex flex-wrap gap-3">
-            <Link
-              href={`/plataforma/curso/${course.id}`}
-              className="flex items-center gap-2 px-7 py-3 gold-gradient rounded-full text-black text-sm font-bold font-[var(--font-lato)] hover:opacity-90 transition-opacity btn-pulse"
-            >
+            <Link href={`/plataforma/curso/${course.id}`}
+              className="flex items-center gap-2 px-7 py-3 gold-gradient rounded-full text-black text-sm font-bold font-[var(--font-lato)] hover:opacity-90 transition-opacity btn-pulse">
               ▶ Assistir Agora
             </Link>
-            <Link
-              href={`/plataforma/curso/${course.id}`}
-              className="flex items-center gap-2 px-7 py-3 bg-white/20 backdrop-blur-sm rounded-full text-white text-sm font-bold font-[var(--font-lato)] hover:bg-white/30 transition"
-            >
+            <Link href={`/plataforma/curso/${course.id}`}
+              className="flex items-center gap-2 px-7 py-3 bg-white/20 backdrop-blur-sm rounded-full text-white text-sm font-bold font-[var(--font-lato)] hover:bg-white/30 transition">
               ℹ Mais Informações
             </Link>
           </div>
@@ -154,95 +175,81 @@ export default function PlataformaPage() {
       </div>
 
       {/* Content rows */}
-      <div className="px-8 md:px-16 py-10 space-y-14 max-w-[1600px] mx-auto">
-        {/* All modules row */}
-        <div>
-          <h2 className="text-xl font-[var(--font-playfair)] font-bold text-white mb-5 flex items-center gap-3">
-            <span className="w-1 h-6 gold-gradient rounded-full" />
-            Módulos do Curso
-          </h2>
-          <div className="netflix-row pb-4">
-            {course.modules.map((mod) => (
-              <Link
-                key={mod.id}
-                href={`/plataforma/curso/${course.id}?modulo=${mod.id}`}
-                className="flex-shrink-0 w-52 md:w-64 card-hover rounded-lg overflow-hidden group"
-              >
-                <div className="relative aspect-video">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={mod.thumbnail}
-                    alt={mod.title}
-                    className="w-full h-full object-cover"
-                  />
-                  {/* Play overlay */}
-                  <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                    <div className="w-12 h-12 rounded-full gold-gradient flex items-center justify-center">
-                      <span className="text-black text-lg ml-0.5">▶</span>
-                    </div>
-                  </div>
-                  {/* Lesson count badge */}
-                  <div className="absolute bottom-2 right-2 px-2 py-0.5 bg-black/70 rounded text-xs text-[var(--gold)] font-[var(--font-lato)]">
-                    {mod.lessons.length} aulas
-                  </div>
-                </div>
-                <div className="p-3 bg-[var(--card)] group-hover:bg-[var(--black-border)] transition-colors">
-                  <p className="text-white text-sm font-[var(--font-playfair)] font-semibold leading-snug line-clamp-2">
-                    {mod.title}
-                  </p>
-                  <p className="text-gray-500 text-xs mt-1 font-[var(--font-lato)]">
-                    {mod.description.slice(0, 60)}…
-                  </p>
-                </div>
-              </Link>
-            ))}
-          </div>
-        </div>
+      <div className="px-8 md:px-16 py-16 space-y-20 max-w-[1600px] mx-auto">
 
-        {/* First lesson of each module (como "Continue assistindo") */}
-        <div>
-          <h2 className="text-xl font-[var(--font-playfair)] font-bold text-white mb-5 flex items-center gap-3">
-            <span className="w-1 h-6 gold-gradient rounded-full" />
-            Aulas em Destaque
-          </h2>
-          <div className="netflix-row pb-4">
-            {course.modules.flatMap((mod) =>
-              mod.lessons.slice(0, 2).map((lesson) => (
-                <Link
-                  key={lesson.id}
-                  href={`/plataforma/aula/${lesson.id}`}
-                  className="flex-shrink-0 w-64 md:w-80 card-hover rounded-lg overflow-hidden group"
-                >
-                  <div className="relative" style={{ aspectRatio: "16/9" }}>
+        {/* Modules row */}
+        {!loading && modules.length > 0 && (
+          <div>
+            <h2 className="text-2xl font-[var(--font-playfair)] font-bold text-white mb-6 flex items-center gap-3">
+              <span className="w-1 h-6 gold-gradient rounded-full" />
+              Módulos do Curso
+            </h2>
+            <div className="netflix-row pb-4">
+              {modules.map((mod) => (
+                <Link key={mod.id} href={`/plataforma/curso/${mod.id}`}
+                  className="flex-shrink-0 w-52 md:w-64 card-hover rounded-lg overflow-hidden group">
+                  <div className="relative aspect-video">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={`https://img.youtube.com/vi/${lesson.videoId}/mqdefault.jpg`}
-                      alt={lesson.title}
-                      className="w-full h-full object-cover"
-                    />
+                    <img src={mod.thumbnail || course.featuredBanner} alt={mod.title} className="w-full h-full object-cover" />
                     <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                       <div className="w-12 h-12 rounded-full gold-gradient flex items-center justify-center">
                         <span className="text-black text-lg ml-0.5">▶</span>
                       </div>
                     </div>
-                    {/* Duration */}
+                    <div className="absolute bottom-2 right-2 px-2 py-0.5 bg-black/70 rounded text-xs text-[var(--gold)] font-[var(--font-lato)]">
+                      {mod.lessons.length} aulas
+                    </div>
+                  </div>
+                  <div className="p-3 bg-[var(--card)] group-hover:bg-[var(--black-border)] transition-colors">
+                    <p className="text-white text-sm font-[var(--font-playfair)] font-semibold leading-snug line-clamp-2">{mod.title}</p>
+                    <p className="text-gray-500 text-xs mt-1 font-[var(--font-lato)]">{mod.description?.slice(0, 60)}…</p>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Featured lessons */}
+        {!loading && featuredLessons.length > 0 && (
+          <div>
+            <h2 className="text-2xl font-[var(--font-playfair)] font-bold text-white mb-6 flex items-center gap-3">
+              <span className="w-1 h-6 gold-gradient rounded-full" />
+              Aulas em Destaque
+            </h2>
+            <div className="netflix-row pb-4">
+              {featuredLessons.map((lesson) => (
+                <Link key={lesson.id} href={`/plataforma/aula/${lesson.id}`}
+                  className="flex-shrink-0 w-64 md:w-80 card-hover rounded-lg overflow-hidden group">
+                  <div className="relative" style={{ aspectRatio: "16/9" }}>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={`https://img.youtube.com/vi/${lesson.video_id}/mqdefault.jpg`} alt={lesson.title} className="w-full h-full object-cover" />
+                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                      <div className="w-12 h-12 rounded-full gold-gradient flex items-center justify-center">
+                        <span className="text-black text-lg ml-0.5">▶</span>
+                      </div>
+                    </div>
                     <div className="absolute bottom-2 right-2 px-2 py-0.5 bg-black/70 rounded text-xs text-white font-[var(--font-lato)]">
                       {lesson.duration}
                     </div>
                   </div>
                   <div className="p-3 bg-[var(--card)] group-hover:bg-[var(--black-border)] transition-colors">
-                    <p className="text-white text-sm font-[var(--font-playfair)] font-semibold line-clamp-2">
-                      {lesson.title}
-                    </p>
-                    <p className="text-[var(--gold)] text-xs mt-1 font-[var(--font-lato)]">
-                      {mod.title.split("—")[0].trim()}
-                    </p>
+                    <p className="text-white text-sm font-[var(--font-playfair)] font-semibold line-clamp-2">{lesson.title}</p>
+                    <p className="text-[var(--gold)] text-xs mt-1 font-[var(--font-lato)]">{lesson.moduleName?.split("—")[0].trim()}</p>
                   </div>
                 </Link>
-              ))
-            )}
+              ))}
+            </div>
           </div>
-        </div>
+        )}
+
+        {/* Empty state */}
+        {!loading && modules.length === 0 && (
+          <div className="text-center py-20">
+            <p className="text-gray-500 font-[var(--font-lato)]">O curso ainda está sendo preparado.</p>
+            <p className="text-gray-600 text-sm mt-2 font-[var(--font-lato)]">Em breve novos módulos estarão disponíveis.</p>
+          </div>
+        )}
       </div>
     </div>
   );

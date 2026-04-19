@@ -1,0 +1,36 @@
+# Dependencies
+node_modules/
+
+# Build output
+.next/
+out/
+dist/
+
+# Lock files (grandes e irrelevantes para contexto)
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Imagens e mídia
+public/
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.svg
+*.ico
+*.webp
+*.mp4
+*.mp3
+
+# Configs geradas automaticamente
+.next/
+*.tsbuildinfo
+next-env.d.ts
+
+# Git
+.git/
+
+# Logs
+*.log
+npm-debug.log*

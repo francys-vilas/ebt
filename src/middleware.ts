@@ -1,6 +1,8 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
+const ADMIN_EMAILS = ["franvilasnovas@gmail.com"];
+
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({ request });
 
@@ -30,6 +32,13 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
+  // Protect /admin — only allowed emails
+  if (request.nextUrl.pathname.startsWith("/admin")) {
+    if (!user || !ADMIN_EMAILS.includes(user.email ?? "")) {
+      return NextResponse.redirect(new URL("/login", request.url));
+    }
+  }
+
   // Redirect /login to /plataforma if already authenticated
   if (request.nextUrl.pathname === "/login" && user) {
     return NextResponse.redirect(new URL("/plataforma", request.url));
@@ -39,5 +48,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/plataforma/:path*", "/login"],
+  matcher: ["/plataforma/:path*", "/admin/:path*", "/login"],
 };

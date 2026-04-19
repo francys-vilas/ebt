@@ -19,7 +19,7 @@ const teamMembers = [
 
 export default function AboutSection() {
   return (
-    <section id="about" className="py-28 px-6 bg-[var(--surface)] relative overflow-hidden">
+    <section id="about" className="py-16 md:py-28 px-4 sm:px-6 bg-[var(--surface)] relative overflow-hidden">
       {/* Decorative gold circle */}
       <div className="absolute -top-40 -right-40 w-96 h-96 rounded-full border border-[var(--gold)]/10" />
       <div className="absolute -bottom-40 -left-40 w-96 h-96 rounded-full border border-[var(--gold)]/10" />
@@ -32,27 +32,27 @@ export default function AboutSection() {
           centered
         />
 
-        <div className="grid md:grid-cols-2 gap-8 mt-16">
+        <div className="grid md:grid-cols-2 gap-6 md:gap-8 mt-10 md:mt-16">
           {teamMembers.map((member, i) => (
             <div
               key={i}
-              className="gold-border-animated rounded-2xl p-8 bg-[var(--card)] group"
+              className="gold-border-animated rounded-2xl p-6 md:p-8 bg-[var(--card)] group"
             >
               {/* Avatar placeholder */}
-              <div className="w-20 h-20 rounded-full gold-gradient flex items-center justify-center text-3xl mb-6 group-hover:scale-110 transition-transform duration-300">
+              <div className="w-16 h-16 md:w-20 md:h-20 rounded-full gold-gradient flex items-center justify-center text-2xl md:text-3xl mb-5 md:mb-6 group-hover:scale-110 transition-transform duration-300">
                 {member.emoji}
               </div>
 
-              <h3 className="text-2xl font-[var(--font-playfair)] font-bold text-white mb-1">
+              <h3 className="text-xl md:text-2xl font-[var(--font-playfair)] font-bold text-white mb-1">
                 {member.name}
               </h3>
               <p className="text-[var(--gold)] text-sm font-[var(--font-lato)] tracking-wider uppercase mb-4">
                 {member.role}
               </p>
 
-              <div className="h-px w-12 gold-gradient mb-5" />
+              <div className="h-px w-12 gold-gradient mb-4 md:mb-5" />
 
-              <p className="text-gray-400 font-[var(--font-lato)] leading-relaxed mb-6">
+              <p className="text-gray-400 font-[var(--font-lato)] leading-relaxed mb-5 md:mb-6 text-sm md:text-base">
                 {member.bio}
               </p>
 

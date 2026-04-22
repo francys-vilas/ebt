@@ -6,6 +6,7 @@ import { course } from "@/data/mockData";
 
 function PlatformNavbar() {
   const [email, setEmail] = useState<string | null>(null);
+  const [role, setRole] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -15,8 +16,18 @@ function PlatformNavbar() {
   );
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      setEmail(data.user?.email ?? null);
+    supabase.auth.getUser().then(async ({ data }) => {
+      if (data.user) {
+        setEmail(data.user.email ?? null);
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("role")
+          .eq("id", data.user.id)
+          .single();
+        if (profile) {
+          setRole(profile.role);
+        }
+      }
     });
   }, []);
 
@@ -58,9 +69,10 @@ function PlatformNavbar() {
         </div>
 
         {/* User avatar + dropdown */}
-        <div className="relative" ref={dropdownRef}>
-          <button
-            onClick={() => setOpen((v) => !v)}
+        <div className="flex items-center gap-4">
+          <div className="relative" ref={dropdownRef}>
+            <button
+              onClick={() => setOpen((v) => !v)}
             className="flex items-center gap-2.5 group"
             aria-label="Menu do usuário"
           >
@@ -83,7 +95,19 @@ function PlatformNavbar() {
                 <p className="text-sm text-white font-[var(--font-lato)] truncate mt-0.5">{email}</p>
               </div>
               {/* Actions */}
-              <div className="p-2">
+              <div className="p-2 flex flex-col gap-1">
+                {role === "admin" && (
+                  <Link
+                    href="/admin"
+                    className="w-full text-left px-3 py-2.5 rounded-lg text-sm text-[var(--gold)] hover:bg-[var(--gold)]/10 font-[var(--font-lato)] transition-colors flex items-center gap-2"
+                  >
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="12" cy="12" r="3"></circle>
+                      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                    </svg>
+                    Painel Admin
+                  </Link>
+                )}
                 <button
                   onClick={handleLogout}
                   className="w-full text-left px-3 py-2.5 rounded-lg text-sm text-red-400 hover:bg-red-400/10 font-[var(--font-lato)] transition-colors flex items-center gap-2"
@@ -98,6 +122,7 @@ function PlatformNavbar() {
               </div>
             </div>
           )}
+          </div>
         </div>
       </div>
     </nav>

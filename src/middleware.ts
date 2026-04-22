@@ -1,7 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
+import { createClient } from "@supabase/supabase-js";
 import { NextResponse, type NextRequest } from "next/server";
-
-const ADMIN_EMAILS = ["franvilasnovas@gmail.com"];
 
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({ request });
@@ -32,10 +31,26 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
-  // Protect /admin — only allowed emails
+  // Protect /admin — check 'role' in 'profiles' table
   if (request.nextUrl.pathname.startsWith("/admin")) {
-    if (!user || !ADMIN_EMAILS.includes(user.email ?? "")) {
+    if (!user) {
       return NextResponse.redirect(new URL("/login", request.url));
+    }
+
+    const adminClient = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      { auth: { autoRefreshToken: false, persistSession: false } }
+    );
+
+    const { data: profile } = await adminClient
+      .from("profiles")
+      .select("role")
+      .eq("id", user.id)
+      .single();
+
+    if (!profile || profile.role !== "admin") {
+      return NextResponse.redirect(new URL("/plataforma", request.url));
     }
   }
 
